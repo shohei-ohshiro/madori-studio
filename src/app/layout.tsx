@@ -6,7 +6,7 @@ const DESC =
   "登録不要・無料の間取り作成ツール。部屋を描いて家具を置き、ワンクリックで3D表示。引っ越し・模様替え・レイアウト検討がブラウザだけで完結します。";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://madori-studio.vercel.app"),
+  metadataBase: new URL("https://madori-studio-nine.vercel.app"),
   title: TITLE,
   description: DESC,
   applicationName: "間取りスタジオ",
