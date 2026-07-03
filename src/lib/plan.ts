@@ -28,7 +28,12 @@ export type FurnitureType =
   | "trampoline"
   | "bar"
   | "wedge"
-  | "ladder";
+  | "ladder"
+  | "airtrack"
+  | "evermat"
+  | "plyobox"
+  | "cone"
+  | "pillar";
 
 export type Furniture = {
   id: string;
@@ -69,6 +74,11 @@ export const FURNITURE_CATALOG: Record<
   bar: { label: "鉄棒", w: 1.2, h: 0.5, height3d: 1.2, color: "#a78bfa", cat: "lesson" },
   wedge: { label: "坂道マット", w: 1.2, h: 0.6, height3d: 0.4, color: "#38bdf8", cat: "lesson" },
   ladder: { label: "ラダー", w: 3.0, h: 0.5, height3d: 0.02, color: "#fde047", cat: "lesson" },
+  airtrack: { label: "エアトラ", w: 6.0, h: 1.4, height3d: 0.3, color: "#818cf8", cat: "lesson" },
+  evermat: { label: "エバーマット", w: 3.0, h: 2.0, height3d: 0.5, color: "#93c5fd", cat: "lesson" },
+  plyobox: { label: "プライオボックス", w: 0.75, h: 0.6, height3d: 0.75, color: "#fb923c", cat: "lesson" },
+  cone: { label: "コーン", w: 0.3, h: 0.3, height3d: 0.5, color: "#f97316", cat: "lesson" },
+  pillar: { label: "柱(障害物)", w: 0.6, h: 0.6, height3d: 2.4, color: "#9ca3af", cat: "lesson" },
 };
 
 export const ROOM_COLORS = ["#fef3c7", "#e0f2fe", "#fce7f3", "#ecfccb", "#f3e8ff", "#ffedd5"];
