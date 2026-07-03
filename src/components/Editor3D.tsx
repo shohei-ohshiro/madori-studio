@@ -54,28 +54,42 @@ export default function Editor3D({
     highlight: THREE.Box3Helper | null;
   } | null>(null);
 
+  /** 選択ハイライトだけを更新（シーンは作り直さない） */
+  const updateHighlight = useCallback(() => {
+    const t = three.current;
+    if (!t) return;
+    if (t.highlight) {
+      t.scene.remove(t.highlight);
+      t.highlight.geometry?.dispose();
+      (t.highlight.material as THREE.Material | undefined)?.dispose?.();
+      t.highlight = null;
+    }
+    const sel = selectedRef.current;
+    if (sel) {
+      const target = t.dynamic.children.find((c) => c.userData.id === sel.id);
+      if (target) {
+        const boxb = new THREE.Box3().setFromObject(target);
+        t.highlight = new THREE.Box3Helper(boxb, new THREE.Color(0x10b981));
+        t.scene.add(t.highlight);
+      }
+    }
+  }, []);
+
   /** シーン内の動的オブジェクト（部屋・家具・建具）を plan から再構築 */
   const rebuild = useCallback(() => {
     const t = three.current;
     if (!t) return;
     const p = planRef.current;
-    // 破棄（geometryとmaterial両方。materialは複数メッシュで共有されている場合があるが
-    // disposeは複数回呼んでも安全なため個別にdisposeする）
+    // 破棄（geometryとmaterialの両方。materialは配列の場合もある。
+    // ハイライトの破棄は updateHighlight() 側に集約）
     t.dynamic.traverse((o) => {
       const mesh = o as THREE.Mesh;
-      if (mesh.geometry) mesh.geometry.dispose();
-      if (mesh.material) {
-        if (Array.isArray(mesh.material)) mesh.material.forEach((m) => m.dispose());
-        else mesh.material.dispose();
-      }
+      mesh.geometry?.dispose();
+      const m = mesh.material as THREE.Material | THREE.Material[] | undefined;
+      if (Array.isArray(m)) m.forEach((x) => x.dispose());
+      else m?.dispose?.();
     });
     t.dynamic.clear();
-    if (t.highlight) {
-      t.scene.remove(t.highlight);
-      t.highlight.geometry.dispose();
-      (t.highlight.material as THREE.Material).dispose();
-      t.highlight = null;
-    }
 
     for (const r of p.rooms) {
       const g = new THREE.Group();
@@ -123,17 +137,8 @@ export default function Editor3D({
       t.dynamic.add(g);
     }
 
-    // 選択ハイライト
-    const sel = selectedRef.current;
-    if (sel) {
-      const target = t.dynamic.children.find((c) => c.userData.id === sel.id);
-      if (target) {
-        const boxb = new THREE.Box3().setFromObject(target);
-        t.highlight = new THREE.Box3Helper(boxb, new THREE.Color(0x10b981));
-        t.scene.add(t.highlight);
-      }
-    }
-  }, []);
+    updateHighlight();
+  }, [updateHighlight]);
 
   // 初期化（1回だけ）: カメラ・コントロールはここでしか作らないので視点が飛ばない
   useEffect(() => {
@@ -181,6 +186,8 @@ export default function Editor3D({
     let dragging: THREE.Object3D | null = null;
     let moved = false;
     let grabOffset = new THREE.Vector3();
+    let downX = 0;
+    let downY = 0;
 
     function setPointer(clientX: number, clientY: number) {
       const rect = renderer.domElement.getBoundingClientRect();
@@ -198,26 +205,34 @@ export default function Editor3D({
       const hits = raycaster.intersectObjects(dynamic.children, true);
       const g = topGroup(hits[0]?.object ?? null);
       if (g) {
+        setSelected({ kind: g.userData.kind, id: g.userData.id });
+        // レイが床平面と交差しない角度ではドラッグを開始しない（位置ジャンプ防止）
+        const point = new THREE.Vector3();
+        if (!raycaster.ray.intersectPlane(groundPlane, point)) return;
         dragging = g;
         moved = false;
+        downX = e.clientX;
+        downY = e.clientY;
         controls.enabled = false;
-        const point = new THREE.Vector3();
-        raycaster.ray.intersectPlane(groundPlane, point);
         grabOffset = point.sub(g.position);
         renderer.domElement.setPointerCapture(e.pointerId);
-        setSelected({ kind: g.userData.kind, id: g.userData.id });
       } else {
         setSelected(null);
       }
     }
     function onPointerMove(e: PointerEvent) {
       if (!dragging) return;
+      // タップのブレ（数px）は移動として扱わない
+      if (!moved && Math.hypot(e.clientX - downX, e.clientY - downY) < 6) return;
       setPointer(e.clientX, e.clientY);
       raycaster.setFromCamera(pointer, camera);
       const point = new THREE.Vector3();
       if (raycaster.ray.intersectPlane(groundPlane, point)) {
         dragging.position.set(point.x - grabOffset.x, 0, point.z - grabOffset.z);
         moved = true;
+        // ハイライト枠を追従させる
+        const t = three.current;
+        if (t?.highlight) t.highlight.box.setFromObject(dragging);
       }
     }
     function onUp() {
@@ -244,6 +259,7 @@ export default function Editor3D({
     renderer.domElement.addEventListener("pointerdown", onDown);
     renderer.domElement.addEventListener("pointermove", onPointerMove);
     renderer.domElement.addEventListener("pointerup", onUp);
+    renderer.domElement.addEventListener("pointercancel", onUp);
 
     // --- パレットからのドラッグ&ドロップ ---
     function onDragOver(e: DragEvent) {
@@ -306,6 +322,7 @@ export default function Editor3D({
       renderer.domElement.removeEventListener("pointerdown", onDown);
       renderer.domElement.removeEventListener("pointermove", onPointerMove);
       renderer.domElement.removeEventListener("pointerup", onUp);
+      renderer.domElement.removeEventListener("pointercancel", onUp);
       renderer.domElement.removeEventListener("dragover", onDragOver);
       renderer.domElement.removeEventListener("drop", onDrop);
       controls.dispose();
@@ -316,10 +333,15 @@ export default function Editor3D({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // planや選択が変わったらオブジェクトだけ再構築（カメラは維持）
+  // planが変わったらオブジェクトだけ再構築（カメラは維持。選択変更では作り直さない）
   useEffect(() => {
     rebuild();
-  }, [plan, selected, rebuild]);
+  }, [plan, rebuild]);
+
+  // 選択が変わったらハイライトだけ更新
+  useEffect(() => {
+    updateHighlight();
+  }, [selected, updateHighlight]);
 
   // ===== サイドバー用の操作関数 =====
   const selRoom = selected?.kind === "room" ? plan.rooms.find((r) => r.id === selected.id) : undefined;
