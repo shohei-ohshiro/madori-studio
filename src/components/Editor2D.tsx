@@ -164,15 +164,26 @@ export default function Editor2D({
           ＋ 部屋を追加
         </button>
         <span className="mx-1 hidden text-slate-300 sm:inline">|</span>
-        {(Object.keys(FURNITURE_CATALOG) as FurnitureType[]).map((t) => (
-          <button
-            key={t}
-            onClick={() => addFurniture(t)}
-            className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-700 hover:border-emerald-400"
-          >
-            ＋{FURNITURE_CATALOG[t].label}
-          </button>
-        ))}
+        <div className="flex w-full flex-col gap-1.5 sm:w-auto">
+          {(["furniture", "lesson"] as const).map((cat) => (
+            <div key={cat} className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] font-semibold text-slate-400">
+                {cat === "furniture" ? "家具" : "レッスン道具"}
+              </span>
+              {(Object.keys(FURNITURE_CATALOG) as FurnitureType[])
+                .filter((t) => FURNITURE_CATALOG[t].cat === cat)
+                .map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => addFurniture(t)}
+                    className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-700 hover:border-emerald-400"
+                  >
+                    ＋{FURNITURE_CATALOG[t].label}
+                  </button>
+                ))}
+            </div>
+          ))}
+        </div>
         {selected && (
           <>
             <span className="mx-1 text-slate-300">|</span>
