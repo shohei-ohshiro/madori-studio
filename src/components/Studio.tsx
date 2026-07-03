@@ -147,7 +147,7 @@ export default function Studio() {
       {tab === "2d" ? (
         <Editor2D plan={current.plan} onChange={setPlan} />
       ) : (
-        <View3D plan={current.plan} />
+        <View3D plan={current.plan} onChange={setPlan} />
       )}
     </div>
   );
