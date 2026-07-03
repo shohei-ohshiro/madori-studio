@@ -1,22 +1,23 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
-const TITLE = "madori-studio";
-const DESC = "madori-studio - shohei_try で scaffold した Next.js アプリ";
+const TITLE = "間取りスタジオ｜無料で間取り作成・3Dシミュレーション";
+const DESC =
+  "登録不要・無料の間取り作成ツール。部屋を描いて家具を置き、ワンクリックで3D表示。引っ越し・模様替え・レイアウト検討がブラウザだけで完結します。";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://madori-studio.vercel.app"),
   title: TITLE,
   description: DESC,
-  applicationName: TITLE,
+  applicationName: "間取りスタジオ",
   openGraph: {
     title: TITLE,
     description: DESC,
     type: "website",
     locale: "ja_JP",
-    siteName: TITLE,
+    siteName: "間取りスタジオ",
   },
-  twitter: { card: "summary", title: TITLE, description: DESC },
-  appleWebApp: { capable: true, title: TITLE, statusBarStyle: "default" },
+  twitter: { card: "summary_large_image", title: TITLE, description: DESC },
   formatDetection: { telephone: false },
 };
 
@@ -33,7 +34,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ja">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased bg-white text-slate-900">{children}</body>
     </html>
   );
 }
