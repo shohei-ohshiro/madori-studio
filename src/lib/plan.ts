@@ -133,26 +133,64 @@ export const FURNITURE_CATALOG: Record<FurnitureType, CatalogEntry> = {
   },
   table: {
     label: "テーブル", w: 1.2, h: 0.8, height3d: 0.72, color: "#d6b28a", cat: "furniture", genre: "テーブル・デスク",
+    colorVariants: ["#d6b28a", "#9c6b3f", "#e7d3ae", "#475569"],
     variants: [
       { label: "2人用", w: 0.8, h: 0.8 },
       { label: "4人用", w: 1.4, h: 0.8 },
       { label: "6人用", w: 1.8, h: 0.9 },
       { label: "ローテーブル", w: 1.0, h: 0.55, height3d: 0.38 },
+      { label: "サイドテーブル", w: 0.5, h: 0.5, height3d: 0.55 },
     ],
   },
-  chair: { label: "椅子", w: 0.5, h: 0.5, height3d: 0.85, color: "#e5c49a", cat: "furniture", genre: "チェア" },
+  chair: {
+    label: "椅子", w: 0.5, h: 0.5, height3d: 0.85, color: "#e5c49a", cat: "furniture", genre: "チェア",
+    colorVariants: ["#e5c49a", "#94a3b8", "#1e293b", "#86efac"],
+    variants: [
+      { label: "ダイニングチェア", w: 0.5, h: 0.5, height3d: 0.85 },
+      { label: "スツール", w: 0.45, h: 0.45, height3d: 0.45 },
+      { label: "ワイドチェア", w: 0.65, h: 0.6, height3d: 0.8 },
+    ],
+  },
   shelf: {
     label: "棚", w: 0.9, h: 0.35, height3d: 1.8, color: "#c4a880", cat: "furniture", genre: "収納",
+    colorVariants: ["#c4a880", "#8a6a45", "#e7d3ae", "#475569"],
     variants: [
       { label: "本棚(高)", w: 0.9, h: 0.35, height3d: 1.8 },
       { label: "ローシェルフ", w: 1.2, h: 0.35, height3d: 0.9 },
       { label: "ワイド収納", w: 1.6, h: 0.45, height3d: 1.2 },
     ],
   },
-  tv: { label: "テレビ台", w: 1.5, h: 0.4, height3d: 0.45, color: "#94a3b8", cat: "furniture", genre: "家電" },
-  fridge: { label: "冷蔵庫", w: 0.7, h: 0.7, height3d: 1.8, color: "#cbd5e1", cat: "furniture", genre: "家電" },
-  plant: { label: "観葉植物", w: 0.45, h: 0.45, height3d: 1.3, color: "#86efac", cat: "furniture", genre: "グリーン" },
-  desk: { label: "デスク", w: 1.2, h: 0.6, height3d: 0.72, color: "#d9a97e", cat: "furniture", genre: "テーブル・デスク" },
+  tv: {
+    label: "テレビ台", w: 1.5, h: 0.4, height3d: 0.45, color: "#94a3b8", cat: "furniture", genre: "家電",
+    variants: [
+      { label: "120cm", w: 1.2, h: 0.4 },
+      { label: "150cm", w: 1.5, h: 0.4 },
+      { label: "180cm", w: 1.8, h: 0.45 },
+    ],
+  },
+  fridge: {
+    label: "冷蔵庫", w: 0.7, h: 0.7, height3d: 1.8, color: "#cbd5e1", cat: "furniture", genre: "家電",
+    variants: [
+      { label: "一人暮らし(小)", w: 0.55, h: 0.6, height3d: 1.3 },
+      { label: "ファミリー(大)", w: 0.7, h: 0.75, height3d: 1.85 },
+    ],
+  },
+  plant: {
+    label: "観葉植物", w: 0.45, h: 0.45, height3d: 1.3, color: "#86efac", cat: "furniture", genre: "グリーン",
+    variants: [
+      { label: "S(卓上)", w: 0.25, h: 0.25, height3d: 0.5 },
+      { label: "M", w: 0.45, h: 0.45, height3d: 1.3 },
+      { label: "L(シンボルツリー)", w: 0.6, h: 0.6, height3d: 1.8 },
+    ],
+  },
+  desk: {
+    label: "デスク", w: 1.2, h: 0.6, height3d: 0.72, color: "#d9a97e", cat: "furniture", genre: "テーブル・デスク",
+    colorVariants: ["#d9a97e", "#475569", "#e7d3ae"],
+    variants: [
+      { label: "標準(120)", w: 1.2, h: 0.6 },
+      { label: "ワイド(160)", w: 1.6, h: 0.7 },
+    ],
+  },
   // レッスン道具（体操教室・運動遊び）
   mat: {
     label: "マット", w: 1.8, h: 0.9, height3d: 0.06, color: "#60a5fa", cat: "lesson", genre: "レッスン道具",
@@ -205,12 +243,19 @@ export const FURNITURE_CATALOG: Record<FurnitureType, CatalogEntry> = {
   },
   floorlamp: {
     label: "フロアランプ", w: 0.4, h: 0.4, height3d: 1.5, color: "#fbbf24", cat: "furniture", genre: "照明",
+    colorVariants: ["#fbbf24", "#f8fafc", "#1e293b"],
+    variants: [
+      { label: "トール", w: 0.4, h: 0.4, height3d: 1.7 },
+      { label: "ミドル", w: 0.35, h: 0.35, height3d: 1.3 },
+    ],
   },
   tablelamp: {
     label: "テーブルランプ", w: 0.25, h: 0.25, height3d: 0.45, color: "#fde68a", cat: "furniture", genre: "照明",
+    colorVariants: ["#fde68a", "#f8fafc", "#94a3b8"],
   },
   wardrobe: {
     label: "ワードローブ", w: 1.2, h: 0.6, height3d: 2.0, color: "#c4a880", cat: "furniture", genre: "収納",
+    colorVariants: ["#c4a880", "#8a6a45", "#e7d3ae", "#475569"],
     variants: [
       { label: "幅120", w: 1.2, h: 0.6 },
       { label: "幅160", w: 1.6, h: 0.6 },
@@ -218,6 +263,7 @@ export const FURNITURE_CATALOG: Record<FurnitureType, CatalogEntry> = {
   },
   chest: {
     label: "チェスト", w: 0.8, h: 0.45, height3d: 0.9, color: "#d9a97e", cat: "furniture", genre: "収納",
+    colorVariants: ["#c4a880", "#8a6a45", "#e7d3ae", "#475569"],
   },
 };
 

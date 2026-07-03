@@ -19,12 +19,53 @@ import {
   type OpeningType,
 } from "@/lib/plan";
 import { buildFurniture, buildOpening } from "@/lib/builders";
+import { getThumb, specKey, type PaletteSpec } from "@/lib/thumbs";
 
 type Kind = "room" | "furniture" | "opening";
 type Selected = { kind: Kind; id: string } | null;
 
 const WALL_H = 2.4;
 const WALL_T = 0.1;
+
+type PaletteItem = { label: string; spec: PaletteSpec; w: number; h: number };
+
+/** ジャンル内の全アイテム（タイプ×サイズ×色の展開） */
+function paletteFor(genre: string): PaletteItem[] {
+  const items: PaletteItem[] = [];
+  for (const type of Object.keys(FURNITURE_CATALOG) as FurnitureType[]) {
+    const c = FURNITURE_CATALOG[type];
+    if (c.genre !== genre) continue;
+    const variants = c.variants ?? [undefined];
+    const colors = c.colorVariants ?? [undefined];
+    for (const v of variants) {
+      for (const col of colors) {
+        items.push({
+          label: v ? `${c.label}・${v.label}` : c.label,
+          spec: { type, variant: v?.label, color: col },
+          w: v?.w ?? c.w,
+          h: v?.h ?? c.h,
+        });
+      }
+    }
+  }
+  return items;
+}
+
+/** 実3D形状のサムネイル（実ビルダーでオフスクリーン描画） */
+function Thumb({ spec }: { spec: PaletteSpec }) {
+  const [url, setUrl] = useState("");
+  const key = specKey(spec);
+  useEffect(() => {
+    setUrl(getThumb(spec));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+  return url ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={url} alt="" className="h-16 w-full object-contain" draggable={false} />
+  ) : (
+    <div className="h-16 w-full animate-pulse rounded bg-slate-100" />
+  );
+}
 
 export default function Editor3D({
   plan,
@@ -274,7 +315,22 @@ export default function Editor3D({
       const point = new THREE.Vector3();
       if (!raycaster.ray.intersectPlane(groundPlane, point)) return;
       const p = planRef.current;
-      if (type) {
+      const itemJson = e.dataTransfer?.getData("application/x-madori-item");
+      if (itemJson) {
+        try {
+          const item = JSON.parse(itemJson) as PaletteItem;
+          const f = {
+            id: uid(), type: item.spec.type,
+            x: snap(Math.max(0, point.x - item.w / 2)), y: snap(Math.max(0, point.z - item.h / 2)),
+            w: item.w, h: item.h, rot: 0 as const,
+            variant: item.spec.variant, color: item.spec.color,
+          };
+          onChangeRef.current({ ...p, furniture: [...p.furniture, f] });
+          setSelected({ kind: "furniture", id: f.id });
+        } catch {
+          // 不正なペイロードは無視
+        }
+      } else if (type) {
         const c = FURNITURE_CATALOG[type as FurnitureType];
         const f = {
           id: uid(), type: type as FurnitureType,
@@ -349,13 +405,17 @@ export default function Editor3D({
   const selOpen = selected?.kind === "opening" ? plan.openings.find((o) => o.id === selected.id) : undefined;
   const selCat = selFur ? FURNITURE_CATALOG[selFur.type] : undefined;
 
-  function addByClick(type: FurnitureType) {
-    const c = FURNITURE_CATALOG[type];
+  function addByClick(item: PaletteItem) {
     const t = three.current;
     // カメラ注視点の近くに置く
     const cx = t ? t.controls.target.x : 4;
     const cz = t ? t.controls.target.z : 3;
-    const f = { id: uid(), type, x: snap(Math.max(0, cx - c.w / 2)), y: snap(Math.max(0, cz - c.h / 2)), w: c.w, h: c.h, rot: 0 as const };
+    const f = {
+      id: uid(), type: item.spec.type,
+      x: snap(Math.max(0, cx - item.w / 2)), y: snap(Math.max(0, cz - item.h / 2)),
+      w: item.w, h: item.h, rot: 0 as const,
+      variant: item.spec.variant, color: item.spec.color,
+    };
     onChange({ ...plan, furniture: [...plan.furniture, f] });
     setSelected({ kind: "furniture", id: f.id });
   }
@@ -550,30 +610,33 @@ export default function Editor3D({
               </button>
             ))}
           </div>
-          <div className="grid max-h-72 grid-cols-2 gap-1.5 overflow-y-auto">
-            {(Object.keys(FURNITURE_CATALOG) as FurnitureType[])
-              .filter((t) => FURNITURE_CATALOG[t].genre === genre)
-              .map((t) => {
-                const c = FURNITURE_CATALOG[t];
-                return (
-                  <button
-                    key={t}
-                    draggable
-                    onDragStart={(e) => e.dataTransfer.setData("furniture-type", t)}
-                    onClick={() => addByClick(t)}
-                    className="cursor-grab rounded-lg border border-slate-200 p-2 text-left hover:border-emerald-400"
-                  >
-                    <span className="block h-3 w-full rounded" style={{ background: c.color }} />
-                    <span className="mt-1 block text-xs font-medium text-slate-700">{c.label}</span>
-                    <span className="block text-[10px] text-slate-400">
-                      {c.w}×{c.h}m{c.variants ? `・${c.variants.length}種` : ""}
-                    </span>
-                  </button>
-                );
-              })}
+          <div className="grid max-h-[26rem] grid-cols-2 gap-1.5 overflow-y-auto xl:grid-cols-3">
+            {paletteFor(genre).map((item) => (
+              <button
+                key={`${item.label}-${specKey(item.spec)}`}
+                draggable
+                onDragStart={(e) =>
+                  e.dataTransfer.setData("application/x-madori-item", JSON.stringify(item))
+                }
+                onClick={() => addByClick(item)}
+                className="cursor-grab rounded-lg border border-slate-200 p-1.5 text-left hover:border-emerald-400"
+                title={`${item.label} ${item.w}×${item.h}m`}
+              >
+                <Thumb spec={item.spec} />
+                <span className="mt-0.5 block truncate text-[11px] font-medium text-slate-700">
+                  {item.label}
+                </span>
+                <span className="flex items-center gap-1 text-[10px] text-slate-400">
+                  {item.spec.color && (
+                    <span className="h-2 w-2 rounded-full" style={{ background: item.spec.color }} />
+                  )}
+                  {item.w}×{item.h}m
+                </span>
+              </button>
+            ))}
           </div>
           <p className="mt-2 text-[10px] text-slate-400">
-            ドラッグして3Dに置く／タップで画面中央に追加
+            見たまま置けます：ドラッグして3Dへ／タップで画面中央に追加
           </p>
         </div>
       </aside>
