@@ -59,14 +59,21 @@ export default function Editor3D({
     const t = three.current;
     if (!t) return;
     const p = planRef.current;
-    // 破棄
+    // 破棄（geometryとmaterial両方。materialは複数メッシュで共有されている場合があるが
+    // disposeは複数回呼んでも安全なため個別にdisposeする）
     t.dynamic.traverse((o) => {
       const mesh = o as THREE.Mesh;
       if (mesh.geometry) mesh.geometry.dispose();
+      if (mesh.material) {
+        if (Array.isArray(mesh.material)) mesh.material.forEach((m) => m.dispose());
+        else mesh.material.dispose();
+      }
     });
     t.dynamic.clear();
     if (t.highlight) {
       t.scene.remove(t.highlight);
+      t.highlight.geometry.dispose();
+      (t.highlight.material as THREE.Material).dispose();
       t.highlight = null;
     }
 
