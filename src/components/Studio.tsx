@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import Editor2D from "@/components/Editor2D";
 import {
   defaultPlan,
   defaultWorkspace,
@@ -13,11 +12,10 @@ import {
   Workspace,
 } from "@/lib/plan";
 
-const View3D = dynamic(() => import("@/components/View3D"), { ssr: false });
+const Editor3D = dynamic(() => import("@/components/Editor3D"), { ssr: false });
 
 export default function Studio() {
   const [ws, setWs] = useState<Workspace>(defaultWorkspace);
-  const [tab, setTab] = useState<"2d" | "3d">("2d");
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -79,7 +77,7 @@ export default function Studio() {
 
   return (
     <div>
-      <div className="mb-2 flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+      <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
         <span className="text-xs font-semibold text-slate-500">プラン:</span>
         <select
           value={current.id}
@@ -98,22 +96,13 @@ export default function Studio() {
           className="w-36 rounded-lg border border-slate-300 px-2 py-1.5 text-sm"
           aria-label="プラン名"
         />
-        <button
-          onClick={newPlan}
-          className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs hover:border-emerald-400"
-        >
+        <button onClick={newPlan} className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs hover:border-emerald-400">
           ＋新規
         </button>
-        <button
-          onClick={duplicatePlan}
-          className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs hover:border-emerald-400"
-        >
+        <button onClick={duplicatePlan} className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs hover:border-emerald-400">
           複製
         </button>
-        <button
-          onClick={exportJson}
-          className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs hover:border-emerald-400"
-        >
+        <button onClick={exportJson} className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs hover:border-emerald-400">
           書き出し
         </button>
         <button
@@ -125,30 +114,7 @@ export default function Studio() {
         </button>
       </div>
 
-      <div className="mb-3 flex overflow-hidden rounded-lg border border-slate-300 w-fit">
-        <button
-          onClick={() => setTab("2d")}
-          className={`px-4 py-2 text-sm font-semibold ${
-            tab === "2d" ? "bg-emerald-500 text-white" : "bg-white text-slate-600"
-          }`}
-        >
-          ✏️ 間取り編集
-        </button>
-        <button
-          onClick={() => setTab("3d")}
-          className={`px-4 py-2 text-sm font-semibold ${
-            tab === "3d" ? "bg-emerald-500 text-white" : "bg-white text-slate-600"
-          }`}
-        >
-          🏠 3Dで見る
-        </button>
-      </div>
-
-      {tab === "2d" ? (
-        <Editor2D plan={current.plan} onChange={setPlan} />
-      ) : (
-        <View3D plan={current.plan} onChange={setPlan} />
-      )}
+      <Editor3D plan={current.plan} onChange={setPlan} />
     </div>
   );
 }
