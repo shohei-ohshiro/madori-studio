@@ -13,14 +13,20 @@ import {
 } from "@/lib/plan";
 
 const Editor3D = dynamic(() => import("@/components/Editor3D"), { ssr: false });
+const GeneratePanel = dynamic(() => import("@/components/GeneratePanel"), { ssr: false });
 
 export default function Studio() {
   const [ws, setWs] = useState<Workspace>(defaultWorkspace);
   const [loaded, setLoaded] = useState(false);
+  const [showGen, setShowGen] = useState(false);
 
   useEffect(() => {
-    setWs(loadWorkspace());
+    const loadedWs = loadWorkspace();
+    setWs(loadedWs);
     setLoaded(true);
+    // まだ何も置いていない人には最初から生成パネルを開く（0から作らせない）
+    const cur = loadedWs.entries.find((e) => e.id === loadedWs.currentId) ?? loadedWs.entries[0];
+    if (cur.plan.furniture.length === 0) setShowGen(true);
   }, []);
 
   useEffect(() => {
@@ -38,6 +44,11 @@ export default function Studio() {
 
   function newPlan() {
     const entry = { id: uid(), name: `プラン${ws.entries.length + 1}`, plan: defaultPlan() };
+    setWs({ currentId: entry.id, entries: [...ws.entries, entry] });
+  }
+
+  function adoptGenerated(name: string, plan: Plan) {
+    const entry = { id: uid(), name, plan };
     setWs({ currentId: entry.id, entries: [...ws.entries, entry] });
   }
 
@@ -78,6 +89,16 @@ export default function Studio() {
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+        <button
+          onClick={() => setShowGen(!showGen)}
+          className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${
+            showGen
+              ? "bg-emerald-600 text-white"
+              : "border border-emerald-400 bg-white text-emerald-700 hover:bg-emerald-50"
+          }`}
+        >
+          ✨ おまかせ生成
+        </button>
         <span className="text-xs font-semibold text-slate-500">プラン:</span>
         <select
           value={current.id}
@@ -113,6 +134,8 @@ export default function Studio() {
           削除
         </button>
       </div>
+
+      {showGen && <GeneratePanel onAdopt={adoptGenerated} />}
 
       <Editor3D plan={current.plan} onChange={setPlan} />
     </div>
